@@ -1,0 +1,6 @@
+{
+  "name": "Jemputan Persaraan Nik Norizan",
+  "description": "Kad jemputan digital interaktif sempena majlis jamuan persaraan Nik Norizan. Dilengkapi dengan muzik latar, hitung undur, atur cara, RSVP, dan ucapan tetamu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

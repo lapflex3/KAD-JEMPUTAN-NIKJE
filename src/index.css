@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Great+Vibes&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", "Georgia", serif;
+  --font-display: "Cinzel", serif;
+  --font-sans: "Montserrat", sans-serif;
+  --font-script: "Great Vibes", cursive;
+
+  /* Premium Sophisticated Dark Colors */
+  --color-emerald-deep: #0a0c10;  /* Base deep black-blue */
+  --color-emerald-dark: #0d0f14;  /* Inner card bg */
+  --color-emerald-mid: #1b212c;   /* Elevated controls */
+  --color-gold-light: #f5f5f0;    /* Warm bone white text */
+  --color-gold-muted: #c2a35e;    /* Sophisticated gold */
+  --color-gold-deep: #a48441;     /* Dark accent gold */
+  --color-gold-bright: #e5cf9c;   /* Bright glow gold */
+}
+
+/* Custom background patterns and animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 15s linear infinite;
+}
+
+/* Custom styles for professional layouts */
+body {
+  font-family: var(--font-sans);
+  background-color: #0a0c10;
+  color: #f5f5f0;
+  overflow-x: hidden;
+}
+
+/* Elegant custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0c10;
+}
+::-webkit-scrollbar-thumb {
+  background: #1b212c;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c2a35e;
+}
