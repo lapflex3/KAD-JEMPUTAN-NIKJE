@@ -20,6 +20,8 @@ import Envelope from "./components/Envelope";
 import Countdown from "./components/Countdown";
 import RSVPForm from "./components/RSVPForm";
 import MusicPlayer from "./components/MusicPlayer";
+// @ts-ignore
+import rumahDestinasi from "./assets/images/rumah_destinasi_1783011299777.jpg";
 
 export default function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,34 +31,34 @@ export default function App() {
 
   // Butiran Majlis
   const eventDetails = {
-    title: "MAJLIS JAMUAN SEMPENA PERSARAAN",
-    honoree: "NIK NORIZAN",
-    date: "Sabtu, 15 Ogos 2026",
-    hijriDate: "1 Safar 1448H",
-    time: "11:30 Pagi - 4:00 Petang",
-    venue: "Dewan Besar Seri Kasih, Presint 8, Putrajaya",
-    address: "Dewan Besar Seri Kasih, Jalan P8, Presint 8, 62250 Putrajaya",
-    mapsUrl: "https://maps.google.com/?q=Dewan+Besar+Seri+Kasih+Presint+8+Putrajaya",
-    wazeUrl: "https://waze.com/ul?q=Dewan+Besar+Seri+Kasih+Presint+8+Putrajaya",
-    countdownTarget: "2026-08-15T11:30:00",
+    title: "MAJLIS PERSARAAN DAN KESYUKURAN",
+    honoree: "NIK NORIZAN BINTI NIK OSMAN",
+    date: "Khamis, 27 Ogos 2026",
+    hijriDate: "13 Safar 1448H",
+    time: "2:00 Petang",
+    venue: "PT 1452, KG HUTAN PASIR, 16450 KETEREH, KELANTAN",
+    address: "PT 1452, KG HUTAN PASIR, 16450 KETEREH, KELANTAN",
+    mapsUrl: "https://maps.app.goo.gl/v1xqFSMBaEVD5r4A7g_st=ac",
+    wazeUrl: "https://waze.com/ul?q=PT+1452,+KG+HUTAN+PASIR,+16450+KETEREH,+KELANTAN",
+    countdownTarget: "2026-08-27T14:00:00",
   };
 
   // Senarai Atur Cara
   const itinerary = [
-    { time: "11:30 Pagi", title: "Ketibaan Para Tetamu", desc: "Ketibaan tetamu jemputan & pendaftaran rsvp di meja penyambut tetamu." },
-    { time: "12:00 Tengah Hari", title: "Ketibaan Yang Diraikan", desc: "Ketibaan Nik Norizan diiringi selawat & perarakan masuk ke dewan utama." },
-    { time: "12:15 Tengah Hari", title: "Bacaan Doa & Ucapan Aluan", desc: "Ucapan daripada Pengerusi Urusetia & bacaan doa selamat kesejahteraan." },
-    { time: "12:30 Tengah Hari", title: "Persembahan Montaj & Penghargaan", desc: "Tayangan montaj riwayat perkhidmatan, jasa bakti dan ucapan kenangan rakan sekerja." },
-    { time: "1:00 Petang", title: "Jamuan Makan & Selingan", desc: "Sesi jamuan makan tengah hari diiringi persembahan muzik akustik perlahan." },
-    { time: "2:30 Petang", title: "Penyampaian Cenderamata & Ucapan Khas", desc: "Ucapan ucapan perpisahan oleh yang diraikan Nik Norizan & sesi penyampaian pingat jasa bakti." },
-    { time: "3:15 Petang", title: "Sesi Bergambar & Salam Restu", desc: "Sesi fotografi kenang-kenangan mengikut kumpulan & bersalaman memohon restu." },
-    { time: "4:00 Petang", title: "Majlis Bersurai", desc: "Keberangkatan pulang yang diraikan Nik Norizan & majlis tamat secara rasmi." },
+    { time: "2:00 Petang", title: "Ketibaan Para Tetamu & Pengesahan RSVP", desc: "Para tetamu mengambil tempat di dewan utama manakala urusetia membantu pengesahan rsvp." },
+    { time: "2:15 Petang", title: "Ketibaan Yang Diraikan", desc: "Ketibaan Yang Diraikan Puan Nik Norizan binti Nik Osman bersama ahli keluarga terdekat." },
+    { time: "2:30 Petang", title: "Bacaan Doa Selamat & Aluan Urusetia", desc: "Memohon keberkatan majlis dengan bacaan doa kesejahteraan dunia & akhirat." },
+    { time: "2:45 Petang", title: "Tayangan Video Kenang-Kenangan", desc: "Tayangan montaj riwayat perkhidmatan, pencapaian, kenangan manis & dedikasi rakan sekerja." },
+    { time: "3:00 Petang", title: "Sesi Jamuan Makan & Selingan Muzik", desc: "Sesi menikmati juadah istimewa dengan alunan muzik persaraan bertemakan sanjungan bakti." },
+    { time: "3:45 Petang", title: "Ucapan Khas Yang Diraikan & Cenderamata", desc: "Ucapan penuh makna daripada Puan Nik Norizan binti Nik Osman disusuli penyampaian tanda penghargaan." },
+    { time: "4:15 Petang", title: "Sesi Fotografi & Bersalaman Memohon Restu", desc: "Sesi fotografi kenang-kenangan bersama keluarga & sahabat handai serta lambaian perpisahan." },
+    { time: "4:30 Petang", title: "Majlis Bersurai", desc: "Majlis tamat dengan seribu memori indah. Selamat bersara diucapkan buat Puan Nik Norizan!" },
   ];
 
   // Penyelaras RSVP (WhatsApp)
   const coordinators = [
-    { name: "Anas (Urusetia)", phone: "0123456789", desc: "Pertanyaan Majlis" },
-    { name: "Sofia (Anak)", phone: "0198765432", desc: "Penginapan & Lokasi" },
+    { name: "Penyelaras Majlis (Urusetia)", phone: "011-10045980", desc: "Pertanyaan Majlis & RSVP" },
+    { name: " Sofia (Keluarga)", phone: "011-10045980", desc: "Panduan Lokasi & Aturcara" },
   ];
 
   const handleOpenInvitation = (name: string) => {
@@ -77,17 +79,17 @@ export default function App() {
     }, 2500);
   };
 
-  // Google Calendar URL (UTC Offset: Putrajaya adalah +08:00, jadi 11:30 pagi adalah 03:30 pagi UTC)
+  // Google Calendar URL (UTC Offset: Kelantan adalah +08:00, jadi 2:00 petang adalah 06:00 pagi UTC)
   const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-    `Majlis Persaraan Nik Norizan`
-  )}&dates=20260815T033000Z/20260815T080000Z&details=${encodeURIComponent(
-    `Jemputan Khas ke Majlis Jamuan Sempena Persaraan Nik Norizan.\n\nTempat: ${eventDetails.venue}\nAlamat: ${eventDetails.address}`
+    `Majlis Persaraan & Kesyukur Nik Norizan binti Nik Osman`
+  )}&dates=20260827T060000Z/20260827T083000Z&details=${encodeURIComponent(
+    `Jemputan Khas ke Majlis Persaraan dan Kesyukuran Nik Norizan binti Nik Osman.\n\nTempat: ${eventDetails.venue}\nAlamat: ${eventDetails.address}`
   )}&location=${encodeURIComponent(eventDetails.venue)}&sf=true&output=xml`;
 
   // WhatsApp Link Generator
   const getWhatsAppLink = (phone: string, coordinatorName: string) => {
     const cleanPhone = "60" + phone.replace(/[^0-9]/g, "");
-    const msg = `Assalamualaikum ${coordinatorName}, saya *${guestName || "Tetamu"}* ingin bertanyakan maklumat lanjut berkaitan Majlis Jamuan Persaraan Nik Norizan pada 15 Ogos 2026 nanti. Terima kasih.`;
+    const msg = `Assalamualaikum ${coordinatorName}, saya *${guestName || "Tetamu"}* ingin bertanyakan maklumat lanjut berkaitan Majlis Persaraan & Kesyukuran Nik Norizan binti Nik Osman pada 27 Ogos 2026 nanti. Terima kasih.`;
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
   };
 
@@ -132,7 +134,7 @@ export default function App() {
             </div>
 
             <p className="text-xs md:text-sm tracking-[0.3em] text-gold-bright font-display uppercase font-semibold">
-              Kolej & Urusetia Bersekutu Putrajaya
+              Keluarga Puan Nik Norizan
             </p>
 
             <div className="space-y-1">
@@ -140,7 +142,7 @@ export default function App() {
                 Dengan penuh hormat dan takzimnya menjemput anda ke
               </p>
               <h2 className="font-display text-2xl md:text-3xl font-bold tracking-wide text-white leading-relaxed pt-2">
-                MAJLIS JAMUAN SEMPENA PERSARAAN
+                MAJLIS PERSARAAN DAN KESYUKURAN
               </h2>
             </div>
 
@@ -280,6 +282,60 @@ export default function App() {
                   <Calendar size={14} className="stroke-[2.5]" />
                   Simpan Pada Kalendar (Google)
                 </a>
+              </div>
+
+              {/* Gambar Destinasi & QR Code Lokasi */}
+              <div className="mt-8 pt-8 border-t border-gold-muted/10">
+                <h4 className="text-xs font-sans font-bold text-gold-bright uppercase tracking-[0.2em] text-center mb-6">
+                  Visual Destinasi & Kod QR Lokasi
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                  {/* Gambar Rumah Destinasi */}
+                  <div className="flex flex-col p-4 rounded-2xl bg-emerald-dark/60 border border-gold-muted/10 shadow-lg relative group overflow-hidden">
+                    <span className="text-[10px] font-mono text-gold-muted uppercase tracking-widest mb-2 block">
+                      ✦ Kediaman Majlis (Destinasi)
+                    </span>
+                    <div className="flex-1 rounded-xl overflow-hidden border border-gold-muted/20 relative aspect-video">
+                      <img 
+                        src={rumahDestinasi} 
+                        alt="Gambar Rumah Destinasi" 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <p className="text-[11px] text-gold-light/60 font-sans mt-3 text-center italic">
+                      Visual kediaman lokasi majlis di Ketereh untuk panduan anda
+                    </p>
+                  </div>
+
+                  {/* QR Code Lokasi */}
+                  <div className="flex flex-col p-4 rounded-2xl bg-emerald-dark/60 border border-gold-muted/10 shadow-lg relative group items-center justify-between text-center">
+                    <div className="w-full text-left">
+                      <span className="text-[10px] font-mono text-gold-muted uppercase tracking-widest mb-2 block">
+                        ✦ Imbas Untuk Navigasi
+                      </span>
+                    </div>
+                    
+                    <div className="p-3 bg-white rounded-2xl border border-gold-muted/30 shadow-inner max-w-[180px] mx-auto transition-transform duration-300 hover:scale-[1.03]">
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(eventDetails.mapsUrl)}`}
+                        alt="QR Code Lokasi Google Maps" 
+                        className="w-full h-auto aspect-square rounded-lg"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    
+                    <div className="mt-4 space-y-1">
+                      <p className="text-xs font-semibold text-gold-bright">
+                        Imbas Dengan Kamera Telefon
+                      </p>
+                      <p className="text-[11px] text-gold-light/60 font-sans max-w-xs mx-auto leading-normal">
+                        Imbas kod QR di atas menggunakan aplikasi kamera telefon pintar anda untuk membuka lokasi Google Maps secara langsung.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>

@@ -55,7 +55,7 @@ export default function Envelope({ onOpen }: EnvelopeProps) {
 
         {/* Tajuk Utama */}
         <h1 className="font-display text-xl md:text-2xl font-bold text-white tracking-wide leading-relaxed mb-6">
-          MAJLIS JAMUAN SEMPENA PERSARAAN
+          MAJLIS PERSARAAN DAN KESYUKURAN
         </h1>
 
         {/* Hiasan garisan dan bintang */}
@@ -69,7 +69,7 @@ export default function Envelope({ onOpen }: EnvelopeProps) {
           Meraikan Sanjungan Bakti
         </p>
         <h2 className="font-serif text-2xl md:text-3xl font-semibold text-gold-bright tracking-wide mb-8">
-          NIK NORIZAN
+          NIK NORIZAN BINTI NIK OSMAN
         </h2>
 
         {/* Borang Kemasukan Nama Tetamu */}

@@ -20,7 +20,7 @@ const SEED_RSVPS = [
     name: "Haji Ahmad Fauzi & Keluarga",
     status: "hadir",
     pax: 2,
-    wishes: "Selamat bersara Tuan Nik Norizan! Terima kasih atas segala bimbingan dan jasa sepanjang kita berkhidmat bersama. Semoga kehidupan persaraan ini membawa sejuta keberkatan dan kebahagiaan bersama keluarga tercinta.",
+    wishes: "Selamat bersara Puan Nik Norizan! Terima kasih atas segala bimbingan dan jasa sepanjang kita berkhidmat bersama. Semoga kehidupan persaraan ini membawa sejuta keberkatan dan kebahagiaan bersama keluarga tercinta.",
     createdAt: "2026-07-02T08:15:00.000Z"
   },
   {
