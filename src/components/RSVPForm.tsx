@@ -1,27 +1,77 @@
 import { useEffect, useState, FormEvent } from "react";
 import { CheckCircle, MessageSquare, Send, Users, Heart, Search, HelpCircle, Check, X, Sparkles, MessageCircle } from "lucide-react";
 import { RSVP } from "../types";
+import { getClientDb } from "../lib/firebase";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 
 interface RSVPFormProps {
   initialGuestName: string;
 }
 
 export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
-  const [name, setName] = useState(initialGuestName);
-  const [status, setStatus] = useState<"hadir" | "tidak_hadir" | "belum_pasti">("hadir");
-  const [pax, setPax] = useState(1);
-  const [wishes, setWishes] = useState("");
+  const [name, setName] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("rsvp_name");
+      if (saved) return saved;
+    }
+    return initialGuestName || "";
+  });
+  const [status, setStatus] = useState<"hadir" | "tidak_hadir" | "belum_pasti">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("rsvp_status");
+      if (saved === "hadir" || saved === "tidak_hadir" || saved === "belum_pasti") {
+        return saved;
+      }
+    }
+    return "hadir";
+  });
+  const [pax, setPax] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("rsvp_pax");
+      if (saved) return Number(saved) || 1;
+    }
+    return 1;
+  });
+  const [wishes, setWishes] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("rsvp_wishes");
+      if (saved) return saved;
+    }
+    return "";
+  });
   
   // Keadaan status borang
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("rsvp_submitted") === "true";
+    }
+    return false;
+  });
   const [errorMsg, setErrorMsg] = useState("");
   const [submittedData, setSubmittedData] = useState<{
     name: string;
     status: "hadir" | "tidak_hadir" | "belum_pasti";
     pax: number;
     wishes: string;
-  } | null>(null);
+  } | null>(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("rsvp_submitted") === "true") {
+      return {
+        name: localStorage.getItem("rsvp_name") || "",
+        status: (localStorage.getItem("rsvp_status") as any) || "hadir",
+        pax: Number(localStorage.getItem("rsvp_pax") || 1),
+        wishes: localStorage.getItem("rsvp_wishes") || "",
+      };
+    }
+    return null;
+  });
+
+  // Segerakkan nama jemputan jika berubah daripada URL parameter
+  useEffect(() => {
+    if (initialGuestName && typeof window !== "undefined" && !localStorage.getItem("rsvp_submitted")) {
+      setName(initialGuestName);
+    }
+  }, [initialGuestName]);
 
   // Keadaan senarai ucapan (guestbook)
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
@@ -95,7 +145,38 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
   };
 
   useEffect(() => {
-    fetchWishes();
+    let unsubscribe: (() => void) | null = null;
+    
+    try {
+      const dbInstance = getClientDb();
+      if (dbInstance) {
+        const rsvpsCol = collection(dbInstance, "rsvps");
+        const q = query(rsvpsCol, orderBy("createdAt", "desc"));
+        
+        unsubscribe = onSnapshot(q, (snapshot) => {
+          const rsvpsList: RSVP[] = [];
+          snapshot.forEach((doc) => {
+            rsvpsList.push({ id: doc.id, ...(doc.data() as any) });
+          });
+          setRsvps(rsvpsList);
+          setIsLoadingWishes(false);
+        }, (error) => {
+          console.error("Firestore onSnapshot error, falling back to fetch:", error);
+          fetchWishes();
+        });
+      } else {
+        fetchWishes();
+      }
+    } catch (err) {
+      console.error("Gagal menetapkan pendengar real-time Firestore:", err);
+      fetchWishes();
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -129,6 +210,16 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
         });
         setIsSuccess(true);
         setWishes("");
+        
+        // Simpan ke localStorage supaya status tidak di-reset apabila muat semula halaman
+        if (typeof window !== "undefined") {
+          localStorage.setItem("rsvp_name", name.trim());
+          localStorage.setItem("rsvp_status", status);
+          localStorage.setItem("rsvp_pax", String(status === "hadir" ? pax : 0));
+          localStorage.setItem("rsvp_wishes", wishes.trim());
+          localStorage.setItem("rsvp_submitted", "true");
+        }
+
         // Muat semula senarai ucapan secara dinamik supaya ucapan tetamu terpampang terus
         await fetchWishes();
       } else {
@@ -261,6 +352,9 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
               onClick={() => {
                 setSubmittedData(null);
                 setIsSuccess(false);
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("rsvp_submitted");
+                }
               }}
               className="mt-2 px-5 py-2.5 rounded-full border border-gold-muted/50 hover:border-gold-bright text-xs text-gold-light font-medium tracking-wider uppercase hover:bg-emerald-dark/40 transition-all cursor-pointer inline-flex items-center gap-1.5"
             >

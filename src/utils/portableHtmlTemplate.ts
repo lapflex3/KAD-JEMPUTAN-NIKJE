@@ -180,6 +180,19 @@ export function generatePortableHtml(): string {
                     🚗 Waze
                 </a>
             </div>
+
+            <!-- Peta Lokasi Interaktif -->
+            <div class="max-w-sm mx-auto rounded-2xl overflow-hidden border border-gold-muted/30 shadow-xl bg-emerald-dark/40 p-1 mt-4">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15873.420804298497!2d102.23561649999999!3d5.945691500000011!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31b6a3006a460413%3A0xd7376b506fa5fe37!2sPt%201452!5e0!3m2!1sen!2smy!4v1783161784941!5m2!1sen!2smy"
+                    width="100%"
+                    height="240"
+                    style="border:0;"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                ></iframe>
+            </div>
         </section>
 
 

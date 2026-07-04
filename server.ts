@@ -3,6 +3,8 @@ import path from "path";
 import fs, { promises as fsPromises } from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, Firestore } from "firebase/firestore";
 
 const app = express();
 const PORT = 3000;
@@ -42,6 +44,34 @@ async function initializeDatabase() {
   }
 }
 
+// Mulakan Klien Firebase Firestore secara santai (lazy load)
+let db: Firestore | null = null;
+let isFirebaseActive = false;
+
+function getFirestoreDb(): Firestore | null {
+  if (db === null && !isFirebaseActive) {
+    try {
+      const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+        const firebaseApp = initializeApp(config);
+        if (config.firestoreDatabaseId) {
+          db = getFirestore(firebaseApp, config.firestoreDatabaseId);
+        } else {
+          db = getFirestore(firebaseApp);
+        }
+        isFirebaseActive = true;
+        console.log("Firebase Firestore berjaya dilancarkan.");
+      } else {
+        console.warn("Fail firebase-applet-config.json tidak ditemui. Menggunakan fallback pangkalan data JSON.");
+      }
+    } catch (error) {
+      console.error("Gagal melancarkan Firebase Firestore:", error);
+    }
+  }
+  return db;
+}
+
 // Pasangkan middleware parser JSON
 app.use(express.json());
 
@@ -65,9 +95,25 @@ function getGeminiClient(): GoogleGenAI {
   return ai;
 }
 
-// API: Dapatkan senarai RSVP / Ucapan daripada Fail JSON
+// API: Dapatkan senarai RSVP / Ucapan daripada Firebase Firestore (dengan fallback Fail JSON)
 app.get("/api/rsvps", async (req, res) => {
   try {
+    const firestoreDb = getFirestoreDb();
+    if (firestoreDb) {
+      try {
+        const rsvpsCol = collection(firestoreDb, "rsvps");
+        const q = query(rsvpsCol, orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const rsvpsList: any[] = [];
+        querySnapshot.forEach((doc) => {
+          rsvpsList.push({ id: doc.id, ...doc.data() });
+        });
+        return res.json(rsvpsList);
+      } catch (fbError) {
+        console.error("Ralat membaca dari Firestore, menggunakan fallback JSON:", fbError);
+      }
+    }
+
     // Susun secara tertib tarikh menurun (terbaru dahulu)
     const sortedRsvps = [...rsvpsMemoryCache].sort((a, b) => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -79,7 +125,7 @@ app.get("/api/rsvps", async (req, res) => {
   }
 });
 
-// API: Simpan RSVP baru ke dalam Fail JSON
+// API: Simpan RSVP baru ke dalam Firebase Firestore (dengan fallback Fail JSON)
 app.post("/api/rsvp", async (req, res) => {
   try {
     const { name, status, pax, wishes } = req.body;
@@ -88,8 +134,8 @@ app.post("/api/rsvp", async (req, res) => {
       return res.status(400).json({ error: "Nama dan Status Kehadiran adalah wajib." });
     }
 
-    const newRsvp = {
-      id: "rsvp-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7),
+    const tempId = "rsvp-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+    const newRsvp: any = {
       name: name.trim(),
       status,
       pax: Number(pax) || 1,
@@ -97,27 +143,94 @@ app.post("/api/rsvp", async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    rsvpsMemoryCache.push(newRsvp);
+    const firestoreDb = getFirestoreDb();
+    if (firestoreDb) {
+      try {
+        const rsvpsCol = collection(firestoreDb, "rsvps");
+        const docRef = await addDoc(rsvpsCol, newRsvp);
+        newRsvp.id = docRef.id;
 
-    // Tulis semula fail pangkalan data secara asid / tidak menghalang
+        // Kemas kini cache memori dan fail sandaran tempatan juga untuk integriti data
+        rsvpsMemoryCache.push(newRsvp);
+        await fsPromises.writeFile(DB_FILE, JSON.stringify(rsvpsMemoryCache, null, 2), "utf-8").catch(() => {});
+
+        return res.status(201).json({ success: true, rsvp: newRsvp });
+      } catch (fbError) {
+        console.error("Ralat menyimpan ke Firestore, menggunakan fallback JSON sahaja:", fbError);
+      }
+    }
+
+    // Fallback simpan ke JSON sahaja jika Firestore tiada/gagal
+    newRsvp.id = tempId;
+    rsvpsMemoryCache.push(newRsvp);
     await fsPromises.writeFile(DB_FILE, JSON.stringify(rsvpsMemoryCache, null, 2), "utf-8");
 
     res.status(201).json({ success: true, rsvp: newRsvp });
   } catch (error) {
-    console.error("Gagal menyimpan RSVP ke Fail JSON:", error);
+    console.error("Gagal menyimpan RSVP:", error);
     res.status(500).json({ error: "Gagal mendaftar status RSVP anda." });
   }
 });
 
+// Fungsi sandaran (fallback) untuk menjana ucapan persaraan berkualiti tinggi jika API Gemini mengalami masalah (cth: kunci ralat/leaked)
+function generateFallbackWish(relationship: string, tone: string, keywords: string): string {
+  const relLower = (relationship || "").toLowerCase();
+  const toneLower = (tone || "").toLowerCase();
+  
+  const isStudent = relLower.includes("murid") || relLower.includes("pelajar") || relLower.includes("student");
+  const isFamily = relLower.includes("saudara") || relLower.includes("keluarga") || relLower.includes("family");
+  
+  let result = "";
+
+  if (toneLower.includes("keagamaan") || toneLower.includes("doa")) {
+    result = `Barakallahulakum sempena persaraan Puan Nik Norizan binti Nik Osman. Kami mendoakan semoga Allah SWT sentiasa melimpahkan rahmat, taufik, dan hidayah-Nya buat Puan sekeluarga. Semoga dikurniakan kesihatan yang afiyah, umur yang berkat, serta ketenangan jiwa dalam menempuh fasa baru ini. Semoga segala amal jasa, sumbangan, dan kebaikan yang Puan curahkan menjadi ladang pahala yang mengalir berterusan. Amin ya Rabbal Alamin.`;
+  } else if (toneLower.includes("puitis") || toneLower.includes("tradisional") || toneLower.includes("pantun")) {
+    if (isStudent) {
+      result = `Pucuk pauh sedang mekar,
+Tumbuh subur di tepi taman;
+Jasa Puan guru penyabar,
+Akan dikenang sepanjang zaman.
+
+Setinggi-tinggi penghargaan dan ucapan terima kasih buat Puan Nik Norizan binti Nik Osman yang dikasihi atas segala bimbingan, didikan, dan kesabaran mencurahkan ilmu kepada kami. Semoga Puan diberkati dengan kebahagiaan dan ketenangan berpanjangan sempena persaraan ini.`;
+    } else {
+      result = `Tuai padi antara nampak,
+Esok jangan layu-layuan;
+Intan budi kami nampak,
+Esok jangan rindu-rinduan.
+
+Selamat bersara diucapkan kepada Puan Nik Norizan binti Nik Osman. Segala jasa bakti, nasihat, dan kebaikan Puan sepanjang berkhidmat bersama kami amatlah kami hargai. Kenangan manis bersama Puan akan sentiasa mekar dalam ingatan kami.`;
+    }
+  } else if (toneLower.includes("mesra") || toneLower.includes("santai")) {
+    if (isStudent) {
+      result = `Selamat bersara Cikgu Nik Norizan binti Nik Osman yang paling mesra dan disayangi! Terima kasih cikgu kerana sentiasa penyabar mendidik kami dan menceriakan hari-hari persekolahan kami. Kami mendoakan semoga Cikgu sentiasa sihat walafiat, gembira, dan diberkati dalam setiap urusan kehidupan selepas persaraan ini. Terima kasih cikgu!`;
+    } else if (isFamily) {
+      result = `Selamat bersara buat Puan Nik Norizan yang disayangi! Kami sangat bangga dengan dedikasi dan kejayaan luar biasa sepanjang tempoh perkhidmatan Puan. Semoga fasa persaraan ini dipenuhi dengan kebahagiaan, ketenangan, dan kesihatan yang baik bersama keluarga tersayang. Nikmati masa berkualiti ini sepenuhnya!`;
+    } else {
+      result = `Selamat bersara buat Kak Nik Norizan yang tersayang! Kehilangan Kak Nik pastinya akan amat dirasai oleh kami semua di sini. Terima kasih atas segala gelak tawa, nasihat, dan bimbingan berharga yang pernah dikongsikan. Semoga fasa baru dalam hidup Kak Nik dipenuhi dengan kesihatan, ketenangan, dan kegembiraan yang melimpah-limpah bersama keluarga!`;
+    }
+  } else {
+    // Formal & Profesional
+    result = `Setinggi-tinggi penghargaan dan ucapan terima kasih diucapkan kepada Yang Berbahagia Puan Nik Norizan binti Nik Osman atas dedikasi, integriti, dan sumbangan bakti yang tiada galang ganti sepanjang tempoh perkhidmatan. Sumbangan cemerlang Puan telah memberikan impak yang amat besar kepada institusi ini. Semoga Puan dikurniakan persaraan yang sejahtera, penuh ketenangan, dan kesihatan yang berkekalan.`;
+  }
+
+  // Jika ada kata kunci tambahan, selitkan dengan cara yang teratur
+  if (keywords && keywords.trim().length > 0) {
+    const kw = keywords.trim();
+    result += `\n\nTerima kasih juga buat Puan atas kenangan indah dan perkongsian ilmu mengenai "${kw}" yang sentiasa hidup dalam ingatan kami.`;
+  }
+
+  return result;
+}
+
 // API: Penjana Ucapan menggunakan Gemini AI (Pembantu Ucapan Pintar)
 app.post("/api/gemini/generate-wish", async (req, res) => {
+  const { relationship, tone, keywords } = req.body;
+
+  if (!relationship || !tone) {
+    return res.status(400).json({ error: "Sila lengkapkan maklumat hubungan dan nada ucapan." });
+  }
+
   try {
-    const { relationship, tone, keywords } = req.body;
-
-    if (!relationship || !tone) {
-      return res.status(400).json({ error: "Sila lengkapkan maklumat hubungan dan nada ucapan." });
-    }
-
     const client = getGeminiClient();
 
     const prompt = `Anda adalah seorang sasterawan Melayu dan penulis kad ucapan persaraan profesional kelas tinggi.
@@ -143,8 +256,10 @@ Arahan khusus:
     const wish = response.text || "";
     res.json({ success: true, wish: wish.trim() });
   } catch (error: any) {
-    console.error("Gagal menjana ucapan AI:", error);
-    res.status(500).json({ error: error.message || "Gagal menghubungi API kecerdasan buatan Gemini." });
+    console.warn("Ralat Gemini API (cth: kunci tamat tempoh / leaked), mengaktifkan penjana sandaran (fallback):", error.message || error);
+    // Menggunakan penjana sandaran (fallback) berkualiti tinggi yang terselamat daripada ralat API key leaked
+    const fallbackWish = generateFallbackWish(relationship, tone, keywords.trim());
+    res.json({ success: true, wish: fallbackWish, isFallback: true });
   }
 });
 

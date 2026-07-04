@@ -25,6 +25,8 @@ import MusicPlayer from "./components/MusicPlayer";
 import { generatePortableHtml } from "./utils/portableHtmlTemplate";
 // @ts-ignore
 import rumahDestinasi from "./assets/images/rumah_destinasi_drive.jpg";
+// @ts-ignore
+import mainInvitationImage from "./assets/images/main_invitation_drive.jpg";
 
 export default function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,25 +45,25 @@ export default function App() {
       shareUrl = shareUrl.replace("ais-dev-", "ais-pre-");
     }
 
-    const shareData = {
-      title: "Jemputan Rasmi Puan Nik Norizan",
-      text: "Dengan penuh rasa kesyukuran, kami sekeluarga menjemput anda ke Majlis Persaraan & Kesyukuran Puan Nik Norizan binti Nik Osman.",
-      url: shareUrl,
-    };
+    const imageAbsoluteUrl = window.location.origin + mainInvitationImage;
+    const shareText = `Dengan penuh rasa kesyukuran, kami sekeluarga menjemput anda ke Majlis Persaraan & Kesyukuran Puan Nik Norizan binti Nik Osman.\n\n${shareUrl}\n\nGambar Home Page:\n${imageAbsoluteUrl}`;
 
     if (navigator.share) {
       try {
-        await navigator.share(shareData);
+        await navigator.share({
+          title: "Jemputan Rasmi Puan Nik Norizan",
+          text: shareText,
+        });
       } catch (err) {
         console.log("Kongsi dibatalkan atau gagal:", err);
       }
     } else {
       try {
-        await navigator.clipboard.writeText(shareUrl);
+        await navigator.clipboard.writeText(shareText);
         setShowShareToast(true);
         setTimeout(() => setShowShareToast(false), 3000);
       } catch (err) {
-        console.error("Gagal menyalin URL:", err);
+        console.error("Gagal menyalin teks kongsi:", err);
       }
     }
   };
@@ -327,6 +329,17 @@ export default function App() {
                 </button>
               </div>
 
+              {/* Peta Lokasi Interaktif */}
+              <div className="max-w-xl mx-auto rounded-2xl overflow-hidden border border-gold-muted/30 shadow-2xl bg-emerald-dark/40 p-1">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15873.420804298497!2d102.23561649999999!3d5.945691500000011!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31b6a3006a460413%3A0xd7376b506fa5fe37!2sPt%201452!5e0!3m2!1sen!2smy!4v1783161784941!5m2!1sen!2smy"
+                  className="w-full h-[260px] md:h-[320px] rounded-xl border-0"
+                  allowFullScreen={true}
+                  loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                ></iframe>
+              </div>
+
               {/* Tambah ke Google Calendar, Kongsi Jemputan & Versi Offline */}
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center items-center pt-2 max-w-xl mx-auto">
                 <a
@@ -500,7 +513,7 @@ export default function App() {
             className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gold-deep border border-gold-bright text-emerald-deep font-sans font-bold text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 tracking-wide text-center whitespace-nowrap"
           >
             <Share2 size={14} className="stroke-[2.5]" />
-            Pautan jemputan berjaya disalin ke papan keratan!
+            Mesej jemputan & pautan berjaya disalin ke papan keratan!
           </motion.div>
         )}
 
