@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { MailOpen } from "lucide-react";
 import { motion } from "motion/react";
 // @ts-ignore
-import kadJemputanCover from "../assets/images/kad_jemputan_cover_1783011760406.jpg";
+import kadJemputanCover from "../assets/images/main_invitation_drive.jpg";
 
 interface EnvelopeProps {
   onOpen: (guestName: string) => void;

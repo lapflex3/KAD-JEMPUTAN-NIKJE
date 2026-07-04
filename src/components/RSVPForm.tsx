@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { CheckCircle, MessageSquare, Send, Users, Heart, Search, HelpCircle, Check, X } from "lucide-react";
+import { CheckCircle, MessageSquare, Send, Users, Heart, Search, HelpCircle, Check, X, Sparkles, MessageCircle } from "lucide-react";
 import { RSVP } from "../types";
 
 interface RSVPFormProps {
@@ -16,6 +16,12 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [submittedData, setSubmittedData] = useState<{
+    name: string;
+    status: "hadir" | "tidak_hadir" | "belum_pasti";
+    pax: number;
+    wishes: string;
+  } | null>(null);
 
   // Keadaan senarai ucapan (guestbook)
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
@@ -24,6 +30,54 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
   // Tab aktif dan carian
   const [activeTab, setActiveTab] = useState<"wishes" | "list">("wishes");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Cek jika halaman dibuka menggunakan pautan kongsi awam (preview only)
+  const isShareLink = typeof window !== "undefined" && (
+    window.location.href.includes("ais-pre-") || 
+    window.location.hostname.includes("ais-pre-")
+  );
+
+  // Keadaan Pembantu Ucapan AI
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
+  const [aiRelationship, setAiRelationship] = useState("Rakan Sekerja (Colleague)");
+  const [aiTone, setAiTone] = useState("puitis & tradisional (menyertakan pantun 4 kerat persaraan)");
+  const [aiKeywords, setAiKeywords] = useState("");
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+  // Fungsi untuk menjana ucapan menggunakan AI
+  const handleGenerateAiWish = async () => {
+    setIsGeneratingAi(true);
+    setErrorMsg("");
+    try {
+      const response = await fetch("/api/gemini/generate-wish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          relationship: aiRelationship,
+          tone: aiTone,
+          keywords: aiKeywords.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setWishes(data.wish);
+          setShowAiAssistant(false); // Tutup panel selepas jana berjaya
+        } else {
+          setErrorMsg(data.error || "Gagal menjana ucapan menggunakan AI.");
+        }
+      } else {
+        const errData = await response.json();
+        setErrorMsg(errData.error || "Pelayan mengembalikan ralat semasa menjana ucapan.");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Ralat rangkaian semasa menghubungi Pembantu AI.");
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
 
   // Ambil senarai ucapan dari pelayan
   const fetchWishes = async () => {
@@ -67,6 +121,12 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
       });
 
       if (response.ok) {
+        setSubmittedData({
+          name: name.trim(),
+          status,
+          pax: status === "hadir" ? pax : 0,
+          wishes: wishes.trim()
+        });
         setIsSuccess(true);
         setWishes("");
         // Muat semula senarai ucapan secara dinamik supaya ucapan tetamu terpampang terus
@@ -133,19 +193,76 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
         </div>
 
         {isSuccess ? (
-          <div className="text-center py-8 space-y-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gold-deep text-emerald-deep mb-2">
-              <CheckCircle size={36} className="stroke-[2.5]" />
+          <div className="text-center py-6 space-y-6">
+            <div className="space-y-3">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gold-deep text-emerald-deep">
+                <CheckCircle size={36} className="stroke-[2.5]" />
+              </div>
+              <h4 className="font-display text-lg font-bold text-gold-bright uppercase tracking-wide">
+                Terima Kasih Atas Pengesahan Anda!
+              </h4>
+              <p className="text-xs md:text-sm text-gold-light/95 font-sans max-w-md mx-auto leading-relaxed">
+                Kehadiran dan doa anda amat kami hargai. Maklumat anda telah berjaya disimpan ke dalam sistem tetamu digital.
+              </p>
             </div>
-            <h4 className="font-display text-lg font-bold text-gold-bright uppercase tracking-wide">
-              Terima Kasih Atas Pengesahan Anda!
-            </h4>
-            <p className="text-xs md:text-sm text-gold-light/90 font-sans max-w-md mx-auto leading-relaxed">
-              Kehadiran dan doa anda amat kami hargai. Maklumat anda telah berjaya disimpan ke dalam sistem tetamu.
-            </p>
+
+            {/* Kad Slip Notifikasi WhatsApp */}
+            {submittedData && (
+              <div className="p-5 rounded-2xl bg-emerald-dark/80 border border-emerald-400/20 max-w-md mx-auto space-y-4 text-left shadow-lg">
+                <div className="flex items-center gap-2 pb-2 border-b border-gold-muted/15">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                  <span className="text-[10px] font-mono tracking-wider text-emerald-400 uppercase font-bold">
+                    Slip Pengesahan Sedia Dihantar
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-gold-light/90 font-sans">
+                  <p>👤 <strong className="text-white">Nama:</strong> {submittedData.name}</p>
+                  <p>📢 <strong className="text-white">Kehadiran:</strong> {
+                    submittedData.status === "hadir" ? "Hadir ✅" : 
+                    submittedData.status === "tidak_hadir" ? "Tidak Hadir ❌" : "Belum Pasti ❓"
+                  }</p>
+                  {submittedData.status === "hadir" && (
+                    <p>👥 <strong className="text-white">Jumlah Pax:</strong> {submittedData.pax} Orang</p>
+                  )}
+                  {submittedData.wishes && (
+                    <p className="italic text-gold-light/70 mt-1 line-clamp-3">" {submittedData.wishes} "</p>
+                  )}
+                </div>
+
+                <div className="pt-2">
+                  <a
+                    href={(() => {
+                      const statusLabels: Record<string, string> = {
+                        hadir: "HADIR ✅",
+                        tidak_hadir: "TIDAK HADIR ❌",
+                        belum_pasti: "BELUM PASTI ❓"
+                      };
+                      const statusLabel = statusLabels[submittedData.status] || submittedData.status.toUpperCase();
+                      const wishesText = submittedData.wishes ? `"${submittedData.wishes}"` : "-(Tiada ucapan)-";
+                      const text = `Assalamu'alaikum Puan Nik Norizan & Urus Setia,\n\nSaya ingin mengesahkan kehadiran saya bagi *Majlis Persaraan dan Kesyukuran Puan Nik Norizan binti Nik Osman*.\n\n*Butiran Pengesahan:*\n👤 *Nama:* ${submittedData.name}\n📢 *Status:* ${statusLabel}\n👥 *Bilangan Pax:* ${submittedData.status === "hadir" ? `${submittedData.pax} Orang` : "-"}\n✍️ *Ucapan/Doa:* ${wishesText}\n\nTerima kasih.`;
+                      return `https://wa.me/601110045980?text=${encodeURIComponent(text)}`;
+                    })()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-sans font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 hover:scale-[1.01]"
+                  >
+                    <MessageCircle size={16} />
+                    <span>Hantar Slip ke WhatsApp</span>
+                  </a>
+                  <p className="text-[10px] text-center text-gold-light/40 font-sans mt-2">
+                    Sila klik untuk hantar notifikasi pengesahan anda ke +60 11-1004 5980
+                  </p>
+                </div>
+              </div>
+            )}
+
             <button
-              onClick={() => setIsSuccess(false)}
-              className="mt-4 px-5 py-2.5 rounded-full border border-gold-muted/50 hover:border-gold-bright text-xs text-gold-light font-medium tracking-wider uppercase hover:bg-emerald-dark/40 transition-all cursor-pointer"
+              onClick={() => {
+                setSubmittedData(null);
+                setIsSuccess(false);
+              }}
+              className="mt-2 px-5 py-2.5 rounded-full border border-gold-muted/50 hover:border-gold-bright text-xs text-gold-light font-medium tracking-wider uppercase hover:bg-emerald-dark/40 transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
               Hantar Pengesahan Baru
             </button>
@@ -230,11 +347,115 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
             )}
 
             {/* Ucapan & Doa */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-sans tracking-widest text-gold-light/90 uppercase font-medium flex items-center gap-2">
-                <MessageSquare size={14} className="text-gold-muted" />
-                Ucapan, Doa & Dedikasi
-              </label>
+            <div className="space-y-1.5 relative">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-sans tracking-widest text-gold-light/90 uppercase font-medium flex items-center gap-2">
+                  <MessageSquare size={14} className="text-gold-muted" />
+                  Ucapan, Doa & Dedikasi
+                </label>
+                
+                {/* Butang Pembantu AI - Sembunyikan untuk pautan perkongsian (preview only) */}
+                {!isShareLink && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAiAssistant(!showAiAssistant)}
+                    className="flex items-center gap-1.5 text-[10px] md:text-xs font-sans font-bold text-gold-bright hover:text-white bg-gold-deep/10 hover:bg-gold-deep/20 border border-gold-muted/30 hover:border-gold-bright px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                  >
+                    <Sparkles size={12} className="text-gold-bright animate-pulse" />
+                    Pembantu Ucapan AI
+                  </button>
+                )}
+              </div>
+
+              {/* Panel Pembantu AI */}
+              {!isShareLink && showAiAssistant && (
+                <div className="p-4 bg-emerald-dark/95 border border-gold-muted/30 rounded-2xl space-y-4 mb-3 text-left animate-fadeIn">
+                  <div className="flex items-center justify-between border-b border-gold-muted/15 pb-2">
+                    <span className="text-xs font-sans font-bold text-gold-bright uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-gold-bright" />
+                      Pembantu Ucapan Pintar (Gemini AI)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowAiAssistant(false)}
+                      className="text-gold-light/40 hover:text-white cursor-pointer transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  <p className="text-[11px] text-gold-light/70 font-sans leading-normal">
+                    Lengkapkan pilihan di bawah untuk membolehkan AI menjana ucapan persaraan beradab tinggi yang puitis dan indah khas buat Puan Nik Norizan.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Hubungan */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-sans tracking-wider text-gold-light/60 uppercase">Hubungan Anda</label>
+                      <select
+                        value={aiRelationship}
+                        onChange={(e) => setAiRelationship(e.target.value)}
+                        className="w-full py-1.5 px-2 bg-emerald-deep border border-gold-muted/20 text-xs text-white rounded-lg focus:outline-none focus:border-gold-bright"
+                      >
+                        <option value="Rakan Sekerja (Colleague)">Rakan Sekerja</option>
+                        <option value="Sahabat Handai / Teman Rapat">Sahabat Handai</option>
+                        <option value="Ahli Keluarga / Saudara">Ahli Keluarga / Saudara</option>
+                        <option value="Anak Murid / Bekas Pelajar">Anak Murid / Bekas Pelajar</option>
+                        <option value="Tetamu Kehormat / Orang Awam">Tetamu Kehormat / Awam</option>
+                      </select>
+                    </div>
+
+                    {/* Nada */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-sans tracking-wider text-gold-light/60 uppercase">Nada Ucapan</label>
+                      <select
+                        value={aiTone}
+                        onChange={(e) => setAiTone(e.target.value)}
+                        className="w-full py-1.5 px-2 bg-emerald-deep border border-gold-muted/20 text-xs text-white rounded-lg focus:outline-none focus:border-gold-bright"
+                      >
+                        <option value="puitis & tradisional (menyertakan pantun 4 kerat persaraan)">Puitis & Tradisional (Pantun)</option>
+                        <option value="mesra & santai (mesra, akrab dan menyentuh hati)">Mesra & Santai</option>
+                        <option value="formal & profesional (sesuai untuk protokol pejabat)">Formal & Profesional</option>
+                        <option value="keagamaan & doa (fokus kepada keberkatan, selawat dan kesihatan afiyah)">Keagamaan & Doa</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Kata kunci */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-sans tracking-wider text-gold-light/60 uppercase">Memori / Kata Kunci Tambahan (Opsional)</label>
+                    <input
+                      type="text"
+                      value={aiKeywords}
+                      onChange={(e) => setAiKeywords(e.target.value)}
+                      placeholder="Contoh: terima kasih bimbingan matematik, kenangan manis di sekolah..."
+                      className="w-full py-2 px-3 bg-emerald-deep border border-gold-muted/20 text-xs text-white rounded-lg focus:outline-none focus:border-gold-bright placeholder-gold-light/25"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiWish}
+                      disabled={isGeneratingAi}
+                      className="px-4 py-2 bg-gradient-to-r from-gold-deep to-gold-bright text-emerald-deep font-sans font-bold text-xs rounded-xl hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                    >
+                      {isGeneratingAi ? (
+                        <>
+                          <span className="animate-spin h-3.5 w-3.5 border-2 border-emerald-deep border-t-transparent rounded-full"></span>
+                          Menjana...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={12} />
+                          Jana Ucapan Pintar
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <textarea
                 rows={4}
                 value={wishes}

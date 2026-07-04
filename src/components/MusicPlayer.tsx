@@ -55,7 +55,7 @@ export default function MusicPlayer({ playRequested }: MusicPlayerProps) {
       playerRef.current = new window.YT.Player(playerContainerId, {
         height: "1",
         width: "1",
-        videoId: "FL02h4nRfvw",
+        videoId: "CnF6B2UJ3YA",
         playerVars: {
           autoplay: 0,
           controls: 0,
@@ -65,7 +65,7 @@ export default function MusicPlayer({ playRequested }: MusicPlayerProps) {
           showinfo: 0,
           modestbranding: 1,
           loop: 1,
-          playlist: "FL02h4nRfvw", // Untuk pengulangan (loop)
+          playlist: "CnF6B2UJ3YA", // Untuk pengulangan (loop)
         },
         events: {
           onReady: (event: any) => {

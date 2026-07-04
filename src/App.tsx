@@ -13,21 +13,78 @@ import {
   MessageSquare, 
   Volume2, 
   Navigation,
-  Music4
+  Music4,
+  Share2,
+  Download
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Envelope from "./components/Envelope";
 import Countdown from "./components/Countdown";
 import RSVPForm from "./components/RSVPForm";
 import MusicPlayer from "./components/MusicPlayer";
+import { generatePortableHtml } from "./utils/portableHtmlTemplate";
 // @ts-ignore
-import rumahDestinasi from "./assets/images/rumah_destinasi_1783011299777.jpg";
+import rumahDestinasi from "./assets/images/rumah_destinasi_realistik_1783046627020.jpg";
 
 export default function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [copied, setCopied] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showShareToast, setShowShareToast] = useState(false);
+  const [showPortableToast, setShowPortableToast] = useState(false);
+
+
+
+  const handleShare = async () => {
+    let shareUrl = window.location.href;
+    // Tukar URL pembangunan kepada URL perkongsian awam agar boleh dibuka pada mana-mana peranti lain tanpa kekangan login
+    if (shareUrl.includes("ais-dev-")) {
+      shareUrl = shareUrl.replace("ais-dev-", "ais-pre-");
+    }
+
+    const shareData = {
+      title: "Jemputan Rasmi Puan Nik Norizan",
+      text: "Dengan penuh rasa kesyukuran, kami sekeluarga menjemput anda ke Majlis Persaraan & Kesyukuran Puan Nik Norizan binti Nik Osman.",
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Kongsi dibatalkan atau gagal:", err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setShowShareToast(true);
+        setTimeout(() => setShowShareToast(false), 3000);
+      } catch (err) {
+        console.error("Gagal menyalin URL:", err);
+      }
+    }
+  };
+
+  const handleDownloadPortableHtml = () => {
+    try {
+      const htmlContent = generatePortableHtml();
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "Jemputan_Puan_Nik_Norizan_Portable.html";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setShowPortableToast(true);
+      setTimeout(() => setShowPortableToast(false), 3000);
+    } catch (err) {
+      console.error("Ralat semasa memuat turun fail HTML mudah alih:", err);
+    }
+  };
 
   // Butiran Majlis
   const eventDetails = {
@@ -38,27 +95,17 @@ export default function App() {
     time: "2:00 Petang",
     venue: "PT 1452, KG HUTAN PASIR, 16450 KETEREH, KELANTAN",
     address: "PT 1452, KG HUTAN PASIR, 16450 KETEREH, KELANTAN",
-    mapsUrl: "https://maps.app.goo.gl/v1xqFSMBaEVD5r4A7g_st=ac",
+    mapsUrl: "https://maps.app.goo.gl/aNP2PP5NEZB7n27h8",
     wazeUrl: "https://waze.com/ul?q=PT+1452,+KG+HUTAN+PASIR,+16450+KETEREH,+KELANTAN",
     countdownTarget: "2026-08-27T14:00:00",
   };
 
-  // Senarai Atur Cara
-  const itinerary = [
-    { time: "2:00 Petang", title: "Ketibaan Para Tetamu & Pengesahan RSVP", desc: "Para tetamu mengambil tempat di dewan utama manakala urusetia membantu pengesahan rsvp." },
-    { time: "2:15 Petang", title: "Ketibaan Yang Diraikan", desc: "Ketibaan Yang Diraikan Puan Nik Norizan binti Nik Osman bersama ahli keluarga terdekat." },
-    { time: "2:30 Petang", title: "Bacaan Doa Selamat & Aluan Urusetia", desc: "Memohon keberkatan majlis dengan bacaan doa kesejahteraan dunia & akhirat." },
-    { time: "2:45 Petang", title: "Tayangan Video Kenang-Kenangan", desc: "Tayangan montaj riwayat perkhidmatan, pencapaian, kenangan manis & dedikasi rakan sekerja." },
-    { time: "3:00 Petang", title: "Sesi Jamuan Makan & Selingan Muzik", desc: "Sesi menikmati juadah istimewa dengan alunan muzik persaraan bertemakan sanjungan bakti." },
-    { time: "3:45 Petang", title: "Ucapan Khas Yang Diraikan & Cenderamata", desc: "Ucapan penuh makna daripada Puan Nik Norizan binti Nik Osman disusuli penyampaian tanda penghargaan." },
-    { time: "4:15 Petang", title: "Sesi Fotografi & Bersalaman Memohon Restu", desc: "Sesi fotografi kenang-kenangan bersama keluarga & sahabat handai serta lambaian perpisahan." },
-    { time: "4:30 Petang", title: "Majlis Bersurai", desc: "Majlis tamat dengan seribu memori indah. Selamat bersara diucapkan buat Puan Nik Norizan!" },
-  ];
+
 
   // Penyelaras RSVP (WhatsApp)
   const coordinators = [
     { name: "Penyelaras Majlis (Urusetia)", phone: "011-10045980", desc: "Pertanyaan Majlis & RSVP" },
-    { name: " Sofia (Keluarga)", phone: "011-10045980", desc: "Panduan Lokasi & Aturcara" },
+    { name: "Che Anuar Che yaakub (Keluarga)", phone: "010-5595980", desc: "Panduan Lokasi & Aturcara" },
   ];
 
   const handleOpenInvitation = (name: string) => {
@@ -118,10 +165,19 @@ export default function App() {
           <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[radial-gradient(#ECC574_1px,transparent_1px)] [background-size:24px_24px] -z-10"></div>
 
           {/* Banner Aluan Khas Atas */}
-          <div className="text-center bg-emerald-deep/40 border-b border-gold-muted/20 py-3 rounded-2xl mb-4">
-            <p className="text-[10px] md:text-xs tracking-[0.25em] text-gold-bright uppercase font-medium">
-              Selamat Datang, {guestName}
+          <div className="flex items-center justify-between gap-4 bg-emerald-deep/40 border border-gold-muted/20 px-4 py-3 rounded-2xl mb-4">
+            <p className="text-[10px] md:text-xs tracking-[0.25em] text-gold-bright uppercase font-medium truncate">
+              Selamat Datang, {guestName || "Tetamu Kehormat"}
             </p>
+            
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 text-[10px] md:text-xs font-sans font-bold text-gold-bright hover:text-white bg-gold-deep/10 hover:bg-gold-deep/20 border border-gold-muted/30 hover:border-gold-bright px-3 py-1 rounded-lg transition-all cursor-pointer shrink-0"
+              title="Kongsi pautan kad jemputan"
+            >
+              <Share2 size={12} className="text-gold-bright" />
+              <span>Kongsi</span>
+            </button>
           </div>
 
           {/* SECTION A: KEPALA KAD (HERO) */}
@@ -271,17 +327,34 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Tambah ke Google Calendar */}
-              <div className="text-center pt-2">
+              {/* Tambah ke Google Calendar, Kongsi Jemputan & Versi Offline */}
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center items-center pt-2 max-w-xl mx-auto">
                 <a
                   href={googleCalendarUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-gradient-to-r from-gold-deep to-gold-bright text-emerald-deep font-display font-bold text-xs tracking-wider uppercase shadow-md hover:shadow-[0_0_15px_rgba(210,177,104,0.3)] transition-all cursor-pointer hover:scale-[1.02]"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-full bg-emerald-dark border border-gold-muted/30 text-gold-light font-display font-bold text-xs tracking-wider uppercase hover:border-gold-bright transition-all cursor-pointer hover:scale-[1.02]"
                 >
                   <Calendar size={14} className="stroke-[2.5]" />
-                  Simpan Pada Kalendar (Google)
+                  Simpan Kalendar
                 </a>
+
+                <button
+                  onClick={handleShare}
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-full bg-emerald-dark border border-gold-muted/30 text-gold-light font-display font-bold text-xs tracking-wider uppercase hover:border-gold-bright transition-all cursor-pointer hover:scale-[1.02]"
+                >
+                  <Share2 size={14} className="stroke-[2.5]" />
+                  Kongsi Kad
+                </button>
+
+                <button
+                  onClick={handleDownloadPortableHtml}
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-full bg-gradient-to-r from-gold-deep via-gold-bright to-gold-deep text-emerald-deep font-display font-bold text-xs tracking-wider uppercase shadow-md hover:shadow-[0_0_15px_rgba(210,177,104,0.3)] transition-all cursor-pointer hover:scale-[1.02]"
+                  title="Muat turun versi HTML luar talian / mudah alih"
+                >
+                  <Download size={14} className="stroke-[2.5]" />
+                  Muat Turun HTML
+                </button>
               </div>
 
               {/* Gambar Destinasi & QR Code Lokasi */}
@@ -340,44 +413,7 @@ export default function App() {
             </div>
           </section>
 
-          {/* SECTION D: ATUR CARA MAJLIS */}
-          <section className="space-y-8">
-            <div className="text-center">
-              <span className="text-gold-muted text-xs">✦ ✦ ✦</span>
-              <h3 className="font-display text-lg md:text-xl font-bold text-gold-bright tracking-widest uppercase mt-2">
-                Atur Cara Majlis
-              </h3>
-              <p className="text-xs text-gold-light/70 font-sans mt-1">
-                Tentatif pengisian majlis sepanjang jamuan berlangsung.
-              </p>
-            </div>
 
-            {/* Timeline */}
-            <div className="relative max-w-lg mx-auto pl-4 border-l-2 border-gold-muted/20 space-y-8 py-2">
-              {itinerary.map((item, index) => (
-                <div key={index} className="relative group pl-6">
-                  {/* Penunjuk Bulatan Emas */}
-                  <div className="absolute -left-[27px] top-1.5 flex items-center justify-center w-3 h-3 rounded-full bg-[#0a0c10] border-2 border-gold-bright transition-all group-hover:scale-125">
-                    <div className="w-1 h-1 rounded-full bg-gold-deep"></div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="inline-block text-[10px] font-mono font-bold text-gold-bright bg-emerald-deep/60 px-2.5 py-0.5 border border-gold-muted/15 rounded-md">
-                      {item.time}
-                    </span>
-                    <h4 className="font-sans text-xs md:text-sm font-bold text-white tracking-wide">
-                      {item.title}
-                    </h4>
-                    {item.desc && (
-                      <p className="text-[11px] md:text-xs text-gold-light/60 font-sans leading-relaxed">
-                        {item.desc}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
 
           {/* SECTION E: BORANG RSVP & BUKU UCAPAN */}
           <section className="pt-4">
@@ -449,10 +485,34 @@ export default function App() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gold-deep border border-gold-bright text-emerald-deep font-sans font-bold text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 tracking-wide"
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gold-deep border border-gold-bright text-emerald-deep font-sans font-bold text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 tracking-wide text-center whitespace-nowrap"
           >
             <Check size={14} className="stroke-[3]" />
             Alamat berjaya disalin ke papan keratan!
+          </motion.div>
+        )}
+
+        {showShareToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gold-deep border border-gold-bright text-emerald-deep font-sans font-bold text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 tracking-wide text-center whitespace-nowrap"
+          >
+            <Share2 size={14} className="stroke-[2.5]" />
+            Pautan jemputan berjaya disalin ke papan keratan!
+          </motion.div>
+        )}
+
+        {showPortableToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gold-deep border border-gold-bright text-emerald-deep font-sans font-bold text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 tracking-wide text-center whitespace-nowrap"
+          >
+            <Download size={14} className="stroke-[2.5]" />
+            Versi HTML mudah alih sedia dimuat turun!
           </motion.div>
         )}
       </AnimatePresence>
