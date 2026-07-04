@@ -173,7 +173,7 @@ export function generatePortableHtml(): string {
         <section class="space-y-4 text-center">
             <h4 class="text-xs font-sans font-bold text-gold-bright uppercase tracking-[0.2em]">Navigasi & Panduan Arah</h4>
             <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto">
-                <a href="https://maps.app.goo.gl/aNP2PP5NEZB7n27h8" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-dark border border-gold-muted/30 text-gold-bright text-xs font-semibold uppercase hover:bg-emerald-dark/80 transition-all">
+                <a href="https://www.google.com/maps/dir/?api=1&destination=5.952585000553395,102.24316960051131" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-dark border border-gold-muted/30 text-gold-bright text-xs font-semibold uppercase hover:bg-emerald-dark/80 transition-all">
                     📍 Google Maps
                 </a>
                 <a href="https://waze.com/ul?q=PT%201452%20KG%20HUTAN%20PASIR%20KETEREH%20KELANTAN" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-dark border border-gold-muted/30 text-gold-bright text-xs font-semibold uppercase hover:bg-emerald-dark/80 transition-all">

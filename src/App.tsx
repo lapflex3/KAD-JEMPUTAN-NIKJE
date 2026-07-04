@@ -24,7 +24,7 @@ import RSVPForm from "./components/RSVPForm";
 import MusicPlayer from "./components/MusicPlayer";
 import { generatePortableHtml } from "./utils/portableHtmlTemplate";
 // @ts-ignore
-import rumahDestinasi from "./assets/images/rumah_destinasi_realistik_1783046627020.jpg";
+import rumahDestinasi from "./assets/images/rumah_destinasi_drive.jpg";
 
 export default function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -95,7 +95,7 @@ export default function App() {
     time: "2:00 Petang",
     venue: "PT 1452, KG HUTAN PASIR, 16450 KETEREH, KELANTAN",
     address: "PT 1452, KG HUTAN PASIR, 16450 KETEREH, KELANTAN",
-    mapsUrl: "https://maps.app.goo.gl/aNP2PP5NEZB7n27h8",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=5.952585000553395,102.24316960051131",
     wazeUrl: "https://waze.com/ul?q=PT+1452,+KG+HUTAN+PASIR,+16450+KETEREH,+KELANTAN",
     countdownTarget: "2026-08-27T14:00:00",
   };
