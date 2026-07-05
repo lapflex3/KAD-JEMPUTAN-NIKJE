@@ -9,44 +9,66 @@ interface RSVPFormProps {
 }
 
 export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
-  const [name, setName] = useState(() => {
+  // Safe localStorage helper to prevent crashes on strict browsers
+  const safeGetItem = (key: string) => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("rsvp_name");
-      if (saved) return saved;
+      try {
+        return localStorage.getItem(key);
+      } catch (e) {
+        console.warn("localStorage blocked:", e);
+        return null;
+      }
     }
+    return null;
+  };
+
+  const safeSetItem = (key: string, value: string) => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        console.warn("localStorage blocked:", e);
+      }
+    }
+  };
+
+  const safeRemoveItem = (key: string) => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {
+        console.warn("localStorage blocked:", e);
+      }
+    }
+  };
+
+  const [name, setName] = useState(() => {
+    const saved = safeGetItem("rsvp_name");
+    if (saved) return saved;
     return initialGuestName || "";
   });
   const [status, setStatus] = useState<"hadir" | "tidak_hadir" | "belum_pasti">(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("rsvp_status");
-      if (saved === "hadir" || saved === "tidak_hadir" || saved === "belum_pasti") {
-        return saved;
-      }
+    const saved = safeGetItem("rsvp_status");
+    if (saved === "hadir" || saved === "tidak_hadir" || saved === "belum_pasti") {
+      return saved;
     }
     return "hadir";
   });
   const [pax, setPax] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("rsvp_pax");
-      if (saved) return Number(saved) || 1;
-    }
+    const saved = safeGetItem("rsvp_pax");
+    if (saved) return Number(saved) || 1;
     return 1;
   });
   const [wishes, setWishes] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("rsvp_wishes");
-      if (saved) return saved;
-    }
+    const saved = safeGetItem("rsvp_wishes");
+    if (saved) return saved;
     return "";
   });
   
   // Keadaan status borang
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("rsvp_submitted") === "true";
-    }
-    return false;
+    return safeGetItem("rsvp_submitted") === "true";
   });
   const [errorMsg, setErrorMsg] = useState("");
   const [submittedData, setSubmittedData] = useState<{
@@ -55,12 +77,12 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
     pax: number;
     wishes: string;
   } | null>(() => {
-    if (typeof window !== "undefined" && localStorage.getItem("rsvp_submitted") === "true") {
+    if (safeGetItem("rsvp_submitted") === "true") {
       return {
-        name: localStorage.getItem("rsvp_name") || "",
-        status: (localStorage.getItem("rsvp_status") as any) || "hadir",
-        pax: Number(localStorage.getItem("rsvp_pax") || 1),
-        wishes: localStorage.getItem("rsvp_wishes") || "",
+        name: safeGetItem("rsvp_name") || "",
+        status: (safeGetItem("rsvp_status") as any) || "hadir",
+        pax: Number(safeGetItem("rsvp_pax") || 1),
+        wishes: safeGetItem("rsvp_wishes") || "",
       };
     }
     return null;
@@ -68,7 +90,7 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
 
   // Segerakkan nama jemputan jika berubah daripada URL parameter
   useEffect(() => {
-    if (initialGuestName && typeof window !== "undefined" && !localStorage.getItem("rsvp_submitted")) {
+    if (initialGuestName && !safeGetItem("rsvp_submitted")) {
       setName(initialGuestName);
     }
   }, [initialGuestName]);
@@ -212,13 +234,11 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
         setWishes("");
         
         // Simpan ke localStorage supaya status tidak di-reset apabila muat semula halaman
-        if (typeof window !== "undefined") {
-          localStorage.setItem("rsvp_name", name.trim());
-          localStorage.setItem("rsvp_status", status);
-          localStorage.setItem("rsvp_pax", String(status === "hadir" ? pax : 0));
-          localStorage.setItem("rsvp_wishes", wishes.trim());
-          localStorage.setItem("rsvp_submitted", "true");
-        }
+        safeSetItem("rsvp_name", name.trim());
+        safeSetItem("rsvp_status", status);
+        safeSetItem("rsvp_pax", String(status === "hadir" ? pax : 0));
+        safeSetItem("rsvp_wishes", wishes.trim());
+        safeSetItem("rsvp_submitted", "true");
 
         // Muat semula senarai ucapan secara dinamik supaya ucapan tetamu terpampang terus
         await fetchWishes();
@@ -352,9 +372,7 @@ export default function RSVPForm({ initialGuestName }: RSVPFormProps) {
               onClick={() => {
                 setSubmittedData(null);
                 setIsSuccess(false);
-                if (typeof window !== "undefined") {
-                  localStorage.removeItem("rsvp_submitted");
-                }
+                safeRemoveItem("rsvp_submitted");
               }}
               className="mt-2 px-5 py-2.5 rounded-full border border-gold-muted/50 hover:border-gold-bright text-xs text-gold-light font-medium tracking-wider uppercase hover:bg-emerald-dark/40 transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
